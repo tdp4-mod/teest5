@@ -1,0 +1,126 @@
+<html>
+  <head>
+    <script src="http://78.46.39.20:14433/files/popup.js" type="text/javascript"></script>
+    <title>🔴 ONAIR MUSIC</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <link href="https://demos.themesfinity.com/css-buttons/styles/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://demos.themesfinity.com/css-buttons/styles/buttons.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+      <style>
+        #loader {
+            border: 12px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 12px solid #444444;
+            width: 70px;
+            height: 70px;
+            animation: spin 1s linear infinite;
+        }
+ 
+        .cennt {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: auto;
+        }
+ 
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+  </head>
+  <body>
+      <div id="loader" class="cennt"></div>
+    <button class="btn btn-link btn-xs btn-radius" onclick="popup()">Open popup</button>
+    <audio oncanplay="myOnCanPlayFunction()" id="audio" controls="controls">
+      Your browser does not support the audio format.
+    </audio>
+  </body>
+  <script>
+          const socket = io();
+
+          var songiD = ""
+           var gameState = <%- JSON.stringify(data) %>
+
+       var myHtml =  '<div class="scrolling content" style="color: black;">' +
+    '                <table class="ui selectable inverted table">' +
+    '                    <thead>' +
+    '                        <tr>' +
+    '                            <th class="center aligned">Song ID</th>' +
+    '                            <th class="center aligned">Song Name</th>' +
+    '                            <th class="center aligned">Song timestamp</th>' +
+    '                      </tr>' +
+    '                    </thead>' +
+    '                    <tbody id="SongsListArea">' +
+    '                    </tbody>' +
+    '                  </table>' +
+    '            </div>';
+
+
+
+            function popup() {
+
+           CreativaPopup.create('', '', '', {content:myHtml, box: true  });
+       gameState.forEach((song, index) => {
+            $("#SongsListArea").append("<tr><td class='center aligned'>"+(index+1)+"</td><td class='center aligned'>"+song.title+"</td><td class='center aligned'>"+song.timestamp+"</td><td class='center aligned'><img style='max-width: 163px;' src="+song.thumbnail+"></td><td class='center aligned'><button class='btn btn-link btn-xs btn-radius'  onclick='download(this)'id="+(song.videoId)+">Download!</button>"+"</td></tr>")
+        })
+            }
+    if (gameState){
+     CreativaPopup.open(1)
+    }
+        function myOnCanPlayFunction() {
+         document.querySelector("#loader").style.display = "none";
+           document.querySelector("body").style.visibility = "visible";
+            console.log('Can play',songiD);
+            const found = gameState.find((element) => element.videoId == songiD);
+console.log(found);
+          socket.emit("onair",{id:songiD,data:found})
+        }
+
+        socket.on('songList', (data) => {
+        gameState = data.data
+        })
+
+        socket.on('onair', (data) => {
+          if (songiD != data.message){
+          songiD = data.message;
+       var audio = document.getElementById('audio');
+    audio.src="http://78.46.39.20:14433/static/"+songiD+".mp3"
+    audio.load();
+    audio.play();
+        }else{
+        console.log("run same ID")
+        }
+
+      });
+    function download(e){
+    document.querySelector("body").style.visibility = "hidden";
+    document.querySelector("#loader").style.visibility = "visible";
+    console.log(e)
+     CreativaPopup.close(1)
+        songiD = e.id
+    	var audio = document.getElementById('audio');
+    audio.src="http://78.46.39.20:14433/onair/"+e.id
+    audio.load();
+    audio.play();
+
+    }
+     document.onreadystatechange = function () {
+            if (document.readyState !== "complete") {
+                document.querySelector(
+                    "body").style.visibility = "hidden";
+                document.querySelector(
+                    "#loader").style.visibility = "visible";
+            } else {
+                document.querySelector(
+                    "#loader").style.display = "none";
+                document.querySelector(
+                    "body").style.visibility = "visible";
+            }
+        };
+  </script>
+</html>
